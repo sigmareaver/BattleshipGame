@@ -120,14 +120,37 @@ if platform.system() == "Linux":
         print("Xlib not available. Linux NativeEventHandler cannot be used.")
 elif platform.system() == 'Windows':
     # Windows Implementation (Stub)
+    from ctypes import wintypes
+    WM_KEYDOWN = 0x0100
+    user32 = ctypes.windll.user32
+
     class WindowsNativeEventHandler(BaseNativeEventHandler):
+        # Define MSG structure for use with ctypes
+        class MSG(ctypes.Structure):
+            _fields_ = [
+                ("hwnd", wintypes.HWND),
+                ("message", wintypes.UINT),
+                ("wParam", wintypes.WPARAM),
+                ("lParam", wintypes.LPARAM),
+                ("time", wintypes.DWORD),
+                ("pt", wintypes.POINT),
+            ]
+
         def __init__(self, window):
             super().__init__(window)
 
         def nativeEventFilter(self, event_type, message):
-            # Implement Windows-specific native event handling if necessary
-            raise NotImplementedError("Windows support has not been implemented yet.")
-            # return False, 0
+            if event_type == "windows_generic_MSG":
+                msg = ctypes.cast(message, ctypes.POINTER(self.MSG)).contents
+                if msg.message == WM_KEYDOWN:
+                    vk_code = msg.wParam
+                    # Translate virtual-key into ASCII
+                    ascii_key = user32.MapVirtualKeyW(vk_code, 2)
+                    if ascii_key:
+                        custom_event = CustomKeyEvent(ascii_key)
+                        QApplication.postEvent(self.window, custom_event)
+                    return True, 0
+            return False, 0
 
     NativeEventHandler = WindowsNativeEventHandler
 elif platform.system() == 'Darwin':  # macOS
