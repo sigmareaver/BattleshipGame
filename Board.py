@@ -184,7 +184,7 @@ class BattleshipView(QGraphicsView):
         if self.dragging_item:
             self.scene().removeItem(self.dragging_item)
             self.dragging_item = None
-            globals.selected_ship = None
+            Globals.selected_ship = None
             event.accept()
 
     def dropEvent(self, event):
